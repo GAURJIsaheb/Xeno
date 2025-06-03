@@ -70,20 +70,40 @@
 
 
 
+import { NextResponse,NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
+export async function middleware(request: NextRequest) {
+  // Get the session token from the request
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
-import { withAuth } from "next-auth/middleware";
+  // Define protected routes
+  const protectedRoutes = [
+    "/dashboard",
+    "/campaigns",
+    "/segments",
+    "/history",
+    "/profile",
+    "/settings",
+    "/create-segment",
+  ];
 
-export default withAuth({
-  callbacks: {
-    authorized({ token }) {
-      // Only allow access if user is logged in
-      return !!token;
-    },
-  },
-});
+  // Check if the request path starts with a protected route
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route)
+  );
 
-// Define which routes to protect
+  // If the route is protected and no token exists, redirect to sign-in
+  if (isProtectedRoute && !token) {
+    const signInUrl = new URL("/auth/signin", request.url);
+    signInUrl.searchParams.set("callbackUrl", request.url);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // Continue to the next middleware or route
+  return NextResponse.next();
+}
+
 export const config = {
   matcher: [
     "/dashboard/:path*",
