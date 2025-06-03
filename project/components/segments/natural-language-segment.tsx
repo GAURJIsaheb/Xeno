@@ -6,26 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-interface Condition {
+interface RuleCondition {
   field: string;
   operator: string;
-  value: string | number;
+  value: string;
 }
 
-interface Rules {
-  operator: "AND" | "OR";
-  conditions: Condition[];
+interface RuleGroup {
+  operator: string;
+  conditions: RuleCondition[];
 }
 
 interface NaturalLanguageSegmentProps {
-  onSegmentUpdate: (rules: Rules) => void;
+  onSegmentUpdate: (rules: RuleGroup) => void;
 }
 
 export function NaturalLanguageSegment({ onSegmentUpdate }: NaturalLanguageSegmentProps) {
   const [query, setQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Example natural language queries
   const exampleQueries = [
     "Customers who haven't shopped in 6 months and spent over $500",
     "New customers from the last 30 days who bought from the electronics category",
@@ -42,11 +41,9 @@ export function NaturalLanguageSegment({ onSegmentUpdate }: NaturalLanguageSegme
     setIsProcessing(true);
 
     try {
-      // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Initialize rules with empty conditions array
-      let rules: Rules = {
+      let rules: RuleGroup = {
         operator: "AND",
         conditions: [],
       };
@@ -67,15 +64,13 @@ export function NaturalLanguageSegment({ onSegmentUpdate }: NaturalLanguageSegme
         });
       } else if (lowerQuery.includes("high-value") || lowerQuery.includes("spent over")) {
         const amountMatch = query.match(/\$(\d+)/);
-        const amount = amountMatch ? Number(amountMatch[1]) : 500;
-
+        const amount = amountMatch ? amountMatch[1] : "500";
         rules.conditions.push({
           field: "total_spent",
           operator: "greater_than",
           value: amount,
         });
       } else {
-        // Default fallback rule
         rules.conditions.push({
           field: "tags",
           operator: "contains",
@@ -83,13 +78,12 @@ export function NaturalLanguageSegment({ onSegmentUpdate }: NaturalLanguageSegme
         });
       }
 
-      // Add additional conditions if the query contains 'and'
       if (lowerQuery.includes("and")) {
         if (lowerQuery.includes("opened") && lowerQuery.includes("email")) {
           rules.conditions.push({
             field: "email_engagement",
             operator: "greater_than",
-            value: 0,
+            value: "0",
           });
         }
 
@@ -97,7 +91,7 @@ export function NaturalLanguageSegment({ onSegmentUpdate }: NaturalLanguageSegme
           rules.conditions.push({
             field: "abandoned_carts",
             operator: "greater_than",
-            value: query.includes("twice") ? 2 : 1,
+            value: query.includes("twice") ? "2" : "1",
           });
         }
       }

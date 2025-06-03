@@ -4,41 +4,31 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 import { useEffect, useState } from "react";
 
 export function AudienceOverview() {
-  // Dummy data - 
-  // const data = [
-  //   { name: "Active Customers", value: 1200 },
-  //   { name: "Inactive (30+ days)", value: 800 },
-  //   { name: "High Value", value: 400 },
-  //   { name: "New (< 30 days)", value: 450 },
-  // ];
+  const [data, setData] = useState<{ name: string; value: number }[]>([]);
 
-  //Define an interface for the raw data coming from the API
-  interface AudienceSegment {
-  name: string;
-  audiencePreviewCount?: number;
-}
-  interface ChartDataItem {
+  type Segment = {
     name: string;
-    value: number;
-  }
+    audiencePreviewCount?: number;
+  };
 
-
-  const [data, setData] = useState<ChartDataItem[]>([]);
-
-useEffect(() => {
+  useEffect(() => {
     fetch("/api/AudienceSegment")
       .then(res => res.json())
-      .then((rawData: AudienceSegment[]) => {
-        const chartData = rawData.map((segment: AudienceSegment) => ({
+      .then((rawData: Segment[]) => {
+        const chartData = rawData.map(segment => ({
           name: segment.name,
           value: segment.audiencePreviewCount || 0,
         }));
-        setData(chartData);
+        setData(chartData); // ✅ set the state
       });
   }, []);
 
-
-  const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
+  const COLORS = [
+    "hsl(var(--chart-1))",
+    "hsl(var(--chart-2))",
+    "hsl(var(--chart-3))",
+    "hsl(var(--chart-4))"
+  ];
 
   return (
     <div className="w-full aspect-square max-h-[300px]">
