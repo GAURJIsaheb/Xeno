@@ -9,7 +9,8 @@ import { authOptions } from "@/lib/auth";
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session) {
-    redirect("/auth/signin");
+    redirect("/auth/signin?callbackUrl=/dashboard");
+
   }
   return (
     <div className="flex min-h-screen flex-col">
