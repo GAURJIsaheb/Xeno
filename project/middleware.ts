@@ -58,4 +58,5 @@ export const config = {
     "/",
     "/auth/:path*",
   ],
+   runtime: 'nodejs', 
 };
