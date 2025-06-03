@@ -6,14 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+interface Condition {
+  field: string;
+  operator: string;
+  value: string | number;
+}
+
+interface Rules {
+  operator: "AND" | "OR";
+  conditions: Condition[];
+}
+
 interface NaturalLanguageSegmentProps {
-  onSegmentUpdate: (rules: any) => void;
+  onSegmentUpdate: (rules: Rules) => void;
 }
 
 export function NaturalLanguageSegment({ onSegmentUpdate }: NaturalLanguageSegmentProps) {
   const [query, setQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   // Example natural language queries
   const exampleQueries = [
     "Customers who haven't shopped in 6 months and spent over $500",
@@ -21,92 +32,76 @@ export function NaturalLanguageSegment({ onSegmentUpdate }: NaturalLanguageSegme
     "Customers who have abandoned their cart at least twice",
     "High-value customers who have opened our emails but haven't purchased recently",
   ];
-  
+
   const handleQuerySubmit = async () => {
     if (!query.trim()) {
       toast.error("Please enter a description for your audience segment");
       return;
     }
-    
+
     setIsProcessing(true);
-    
+
     try {
-      // In a real application, this would be an API call to an AI service
-      // Here we'll simulate a response after a delay
+      // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      // Generate mock rules based on the query
-      let rules = {};
-      
-      if (query.toLowerCase().includes("haven't shopped") || query.toLowerCase().includes("inactive")) {
-        rules = {
-          operator: "AND",
-          conditions: [
-            {
-              field: "last_purchase_date",
-              operator: "older_than",
-              value: query.includes("6 months") ? "6 months" : "3 months",
-            }
-          ]
-        };
-      } else if (query.toLowerCase().includes("new customers")) {
-        rules = {
-          operator: "AND",
-          conditions: [
-            {
-              field: "created_at",
-              operator: "newer_than",
-              value: "30 days",
-            }
-          ]
-        };
-      } else if (query.toLowerCase().includes("high-value") || query.toLowerCase().includes("spent over")) {
+
+      // Initialize rules with empty conditions array
+      let rules: Rules = {
+        operator: "AND",
+        conditions: [],
+      };
+
+      const lowerQuery = query.toLowerCase();
+
+      if (lowerQuery.includes("haven't shopped") || lowerQuery.includes("inactive")) {
+        rules.conditions.push({
+          field: "last_purchase_date",
+          operator: "older_than",
+          value: query.includes("6 months") ? "6 months" : "3 months",
+        });
+      } else if (lowerQuery.includes("new customers")) {
+        rules.conditions.push({
+          field: "created_at",
+          operator: "newer_than",
+          value: "30 days",
+        });
+      } else if (lowerQuery.includes("high-value") || lowerQuery.includes("spent over")) {
         const amountMatch = query.match(/\$(\d+)/);
-        const amount = amountMatch ? amountMatch[1] : "500";
-        
-        rules = {
-          operator: "AND",
-          conditions: [
-            {
-              field: "total_spent",
-              operator: "greater_than",
-              value: amount,
-            }
-          ]
-        };
+        const amount = amountMatch ? Number(amountMatch[1]) : 500;
+
+        rules.conditions.push({
+          field: "total_spent",
+          operator: "greater_than",
+          value: amount,
+        });
       } else {
-        // Default fallback rules
-        rules = {
-          operator: "AND",
-          conditions: [
-            {
-              field: "tags",
-              operator: "contains",
-              value: "active",
-            }
-          ]
-        };
+        // Default fallback rule
+        rules.conditions.push({
+          field: "tags",
+          operator: "contains",
+          value: "active",
+        });
       }
-      
-      // If the query has multiple conditions, add them
-      if (query.toLowerCase().includes("and")) {
-        if (query.toLowerCase().includes("opened") && query.toLowerCase().includes("email")) {
+
+      // Add additional conditions if the query contains 'and'
+      if (lowerQuery.includes("and")) {
+        if (lowerQuery.includes("opened") && lowerQuery.includes("email")) {
           rules.conditions.push({
             field: "email_engagement",
             operator: "greater_than",
-            value: "0",
+            value: 0,
           });
         }
-        
-        if (query.toLowerCase().includes("cart") && query.toLowerCase().includes("abandon")) {
+
+        if (lowerQuery.includes("cart") && lowerQuery.includes("abandon")) {
           rules.conditions.push({
             field: "abandoned_carts",
             operator: "greater_than",
-            value: query.includes("twice") ? "2" : "1",
+            value: query.includes("twice") ? 2 : 1,
           });
         }
       }
-      
+
       onSegmentUpdate(rules);
       toast.success("Segment created successfully!");
     } catch (error) {
@@ -116,7 +111,7 @@ export function NaturalLanguageSegment({ onSegmentUpdate }: NaturalLanguageSegme
       setIsProcessing(false);
     }
   };
-  
+
   return (
     <div className="space-y-4">
       <Textarea
@@ -125,7 +120,7 @@ export function NaturalLanguageSegment({ onSegmentUpdate }: NaturalLanguageSegme
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-      
+
       <div className="flex flex-wrap gap-2">
         {exampleQueries.map((example, index) => (
           <Button
@@ -135,11 +130,11 @@ export function NaturalLanguageSegment({ onSegmentUpdate }: NaturalLanguageSegme
             onClick={() => setQuery(example)}
             className="text-xs"
           >
-            "{example}"
+            {example}
           </Button>
         ))}
       </div>
-      
+
       <Button onClick={handleQuerySubmit} disabled={isProcessing} className="w-full sm:w-auto">
         {isProcessing ? (
           <>

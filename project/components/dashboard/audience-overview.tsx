@@ -11,20 +11,31 @@ export function AudienceOverview() {
   //   { name: "High Value", value: 400 },
   //   { name: "New (< 30 days)", value: 450 },
   // ];
-  const [data, setData] = useState([]);
+
+  //Define an interface for the raw data coming from the API
+  interface AudienceSegment {
+  name: string;
+  audiencePreviewCount?: number;
+}
+  interface ChartDataItem {
+    name: string;
+    value: number;
+  }
+
+
+  const [data, setData] = useState<ChartDataItem[]>([]);
+
 useEffect(() => {
-  fetch("/api/AudienceSegment")
-    .then(res => res.json())
-    .then(rawData => {
-      // Map to simplified data shape for chart
-      const chartData = rawData.map(segment => ({
-        name: segment.name,
-        value: segment.audiencePreviewCount || 0,
-      }));
-      setData(chartData);
-    })
-    
-}, []);
+    fetch("/api/AudienceSegment")
+      .then(res => res.json())
+      .then((rawData: AudienceSegment[]) => {
+        const chartData = rawData.map((segment: AudienceSegment) => ({
+          name: segment.name,
+          value: segment.audiencePreviewCount || 0,
+        }));
+        setData(chartData);
+      });
+  }, []);
 
 
   const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
