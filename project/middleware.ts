@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
 
-// Protected routes that require authentication
 const protectedRoutes = [
   "/dashboard",
   "/campaigns",
@@ -13,37 +12,39 @@ const protectedRoutes = [
   "/create-segment",
 ];
 
+const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
+
 export async function middleware(request: NextRequest) {
-  // Get the pathname from the URL
   const path = request.nextUrl.pathname;
-  
-  // Check if the path is a protected route
-  const isProtectedRoute = protectedRoutes.some((route) => 
-    path === route || path.startsWith(`${route}/`)
+  const isProtectedRoute = protectedRoutes.some(
+    (route) => path === route || path.startsWith(`${route}/`)
   );
-  
+
   if (isProtectedRoute) {
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-    });
-    
-    // If the user is not authenticated, redirect to the sign-in page
+    const token = request.cookies.get("next-auth.session-token")?.value
+      || request.cookies.get("__Secure-next-auth.session-token")?.value;
+
     if (!token) {
       const url = new URL("/auth/signin", request.url);
-      url.searchParams.set("callbackUrl", encodeURI(request.url));
+      url.searchParams.set("callbackUrl", encodeURIComponent(request.url));
+      return NextResponse.redirect(url);
+    }
+
+    try {
+      await jwtVerify(token, secret);
+      // Token is valid, continue
+    } catch (err) {
+      const url = new URL("/auth/signin", request.url);
+      url.searchParams.set("callbackUrl", encodeURIComponent(request.url));
       return NextResponse.redirect(url);
     }
   }
-  
+
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all protected routes
-     */
     "/dashboard/:path*",
     "/campaigns/:path*",
     "/segments/:path*",
@@ -51,12 +52,7 @@ export const config = {
     "/profile/:path*",
     "/settings/:path*",
     "/create-segment/:path*",
-    
-    /*
-     * Match all public routes that may need auth state
-     */
     "/",
     "/auth/:path*",
   ],
-   runtime: 'nodejs', 
 };
