@@ -9,3 +9,8 @@ Moreover, the PR in question included relatively minor changes in the existing e
 The major difficulty in implementation is the correct management of retry logic, as incorrect labeling of retriable errors might cause the system to try to complete the process infinitely or multiple times, reducing performance.
 
 To overcome these challenges, I would rely on the existing retry mechanisms already implemented in the repository rather than introducing new logic. I would also ensure that safeguards such as retry limits and proper error classification are in place. Finally, I would validate the implementation by testing different scenarios to confirm that retries work correctly and do not affect other parts of the system.
+
+
+### Integrity Declaration
+
+"I declare that all written content in this assessment is my own work, created without the use of AI language models or automated writing tools. All technical analysis and documentation reflects my personal understanding and has been written in my own words."
